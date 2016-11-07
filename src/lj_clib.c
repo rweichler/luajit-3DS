@@ -355,6 +355,17 @@ TValue *lj_clib_index(lua_State *L, CLibrary *cl, GCstr *name)
 	}
       }
 #endif
+      if (!p) {
+	lua_getglobal(L, "FFI_DLSYM");
+	if(lua_type(L, -1) == LUA_TFUNCTION) {
+	  lua_pushstring(L, sym);
+	  if(lua_pcall(L, 1, 1, 0) == 0 && lua_type(L, -1) == LUA_TNUMBER) {
+	    p = (void *)(long)lua_tonumber(L, -1);
+	  }
+	}
+	lua_pop(L, 1);
+      }
+
       if (!p)
 	clib_error(L, "cannot resolve symbol " LUA_QS ": %s", sym);
 #if LJ_TARGET_WINDOWS
