@@ -37,6 +37,7 @@ if exist minilua.exe.manifest^
 @if errorlevel 8 goto :X64
 @set DASMFLAGS=-D WIN -D JIT -D FFI
 @set LJARCH=x86
+@set LJCOMPILE=%LJCOMPILE% /arch:SSE2
 :X64
 minilua %DASM% -LN %DASMFLAGS% -o host\buildvm_arch.h vm_x86.dasc
 @if errorlevel 1 goto :BAD
@@ -66,7 +67,7 @@ buildvm -m folddef -o lj_folddef.h lj_opt_fold.c
 @if "%1" neq "debug" goto :NODEBUG
 @shift
 @set LJCOMPILE=%LJCOMPILE% /Zi
-@set LJLINK=%LJLINK% /debug
+@set LJLINK=%LJLINK% /debug /opt:ref /opt:icf /incremental:no
 :NODEBUG
 @if "%1"=="amalg" goto :AMALGDLL
 @if "%1"=="static" goto :STATIC
