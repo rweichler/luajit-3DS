@@ -69,7 +69,7 @@ static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, DWORD prot)
   void *p = VirtualAlloc((void *)hint, sz,
 			 MEM_RESERVE|MEM_COMMIT|MEM_TOP_DOWN, prot);
   if (!p && !hint)
-    lj_trace_err(J, LJ_TRERR_MCODEAL);
+    lj_trace_err(J, LJ_TRERR_MCODEAL_AT);
   return p;
 }
 
@@ -101,7 +101,7 @@ static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot)
 {
   void *p = mmap((void *)hint, sz, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (p == MAP_FAILED) {
-    if (!hint) lj_trace_err(J, LJ_TRERR_MCODEAL);
+    if (!hint) lj_trace_err(J, LJ_TRERR_MCODEAL_AT);
     p = NULL;
   }
   return p;
@@ -215,9 +215,14 @@ static void mcode_protect(jit_State *J, int prot)
 
 #ifdef LJ_TARGET_JUMPRANGE
 
+#include <stdio.h>
+static FILE *f = NULL;
 /* Get memory within relative jump distance of our code in 64 bit mode. */
 static void *mcode_alloc(jit_State *J, size_t sz)
 {
+  if(f == NULL) {
+    f = fopen("/3ds/aaas/mcode.txt", "w");
+  }
   /* Target an address in the static assembler code (64K aligned).
   ** Try addresses within a distance of target-range/2+1MB..target+range/2-1MB.
   ** Use half the jump range so every address in the range can reach any other.
@@ -233,13 +238,20 @@ static void *mcode_alloc(jit_State *J, size_t sz)
   /* First try a contiguous area below the last one. */
   uintptr_t hint = J->mcarea ? (uintptr_t)J->mcarea - sz : 0;
   int i;
-  for (i = 0; i < 32; i++) {  /* 32 attempts ought to be enough ... */
+  int invalid = 1;
+  for (i = 0; i < 2; i++) {  /* 32 attempts ought to be enough ... */
     if (mcode_validptr(hint)) {
       void *p = mcode_alloc_at(J, hint, sz, MCPROT_GEN);
 
-      if (mcode_validptr(p) &&
-	  ((uintptr_t)p + sz - target < range || target - (uintptr_t)p < range))
-	return p;
+      fprintf(f, "%p %.8x %.8x %.8x\n", p, hint, target, range);
+      fflush(f);
+      if (mcode_validptr(p)) {
+	invalid = 0;
+	if(((uintptr_t)p + sz - target < range || target - (uintptr_t)p < range)) {
+	  exit(1);
+	  return p;
+	}
+      }
       if (p) mcode_free(J, p, sz);  /* Free badly placed area. */
     }
     /* Next try probing pseudo-random addresses. */
@@ -248,7 +260,11 @@ static void *mcode_alloc(jit_State *J, size_t sz)
     } while (!(hint + sz < range));
     hint = target + hint - (range>>1);
   }
-  lj_trace_err(J, LJ_TRERR_MCODEAL);  /* Give up. OS probably ignores hints? */
+  if(invalid) {
+    lj_trace_err(J, LJ_TRERR_MCODEAL);  /* Give up. OS probably ignores hints? */
+  } else {
+    lj_trace_err(J, LJ_TRERR_MCODEAL_AT);  /* Give up. OS probably ignores hints? */
+  }
   return NULL;
 }
 
@@ -381,7 +397,7 @@ void lj_mcode_limiterr(jit_State *J, size_t need)
   if ((size_t)need > sizemcode)
     lj_trace_err(J, LJ_TRERR_MCODEOV);  /* Too long for any area. */
   if (J->szallmcarea + sizemcode > maxmcode)
-    lj_trace_err(J, LJ_TRERR_MCODEAL);
+    lj_trace_err(J, LJ_TRERR_MCODEAL_LIMIT);
   mcode_allocarea(J);
   lj_trace_err(J, LJ_TRERR_MCODELM);  /* Retry with new area. */
 }

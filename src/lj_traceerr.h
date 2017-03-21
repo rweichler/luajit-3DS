@@ -46,6 +46,8 @@ TREDEF(TYPEINS,	"persistent type instability")
 
 /* Assembler. */
 TREDEF(MCODEAL,	"failed to allocate mcode memory")
+TREDEF(MCODEAL_AT,	"failed to allocate mcode memory AT")
+TREDEF(MCODEAL_LIMIT,	"failed to allocate mcode memory LIMIT")
 TREDEF(MCODEOV,	"machine code too long")
 TREDEF(MCODELM,	"hit mcode limit (retrying)")
 TREDEF(SPILLOV,	"too many spill slots")
