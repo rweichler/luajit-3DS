@@ -2,16 +2,28 @@
 
 Note: The JIT does not work yet. The FFI does, though. However: there's a catch. It's kind of a hack.
 
-Essentially, what you need to do is create a global table called "SYMBOLS", where the keys are the names of the C functions/variables, and the values are the addresses.
+Essentially, what you need to do is create a global function called "FFI\_DLSYM".
 
 For instance:
 
 ```lua
-SYMBOLS = {}
-SYMBOLS['printf'] = 0x9812734 -- or whatever
+function FFI_DLSYM(name)
+    if name == 'printf' then
+        return 0x2398472938 -- or whatever
+    end
+end
 ```
 
-Typically, you'd expose this from the C side, like so:
+Obviously, it would be quite painful to have a huge if-chain with all the possible symbol names. Typically, I do something like this:
+
+```lua
+SYMBOLS = {}
+function FFI_DLSYM(name)
+    return SYMBOLS[name]
+end
+```
+
+And then, from the C side, I'd do this:
 
 ```c
 lua_getglobal(L, "SYMBOLS");
@@ -21,6 +33,8 @@ lua_settable(L, -3);
 ```
 
 ## To compile:
+
+Install devkitPro/devkitARM. Then,
 
 ```
 ./compile
