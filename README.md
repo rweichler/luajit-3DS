@@ -32,6 +32,8 @@ lua_pushnumber(L, (uintptr_t)&printf);
 lua_settable(L, -3);
 ```
 
+An example usage of this is in [Lua Red](http://github.com/rweichler/luared)
+
 ## To compile:
 
 Install devkitPro/devkitARM. Then,
