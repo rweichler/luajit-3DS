@@ -39,5 +39,5 @@ An example usage of this is in [Lua Red](http://github.com/rweichler/luared)
 Install devkitPro/devkitARM. Then,
 
 ```
-./compile
+make 3ds
 ```

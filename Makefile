@@ -112,6 +112,7 @@ default all $(INSTALL_DEP):
 	$(MAKE) -C src
 	@echo "==== Successfully built LuaJIT $(VERSION) ===="
 
+
 install: $(INSTALL_DEP)
 	@echo "==== Installing LuaJIT $(VERSION) to $(PREFIX) ===="
 	$(MKDIR) $(INSTALL_DIRS)
@@ -136,6 +137,9 @@ install: $(INSTALL_DEP)
 	@echo ""
 	@echo "  $(SYMLINK) $(INSTALL_TNAME) $(INSTALL_TSYM)"
 	@echo ""
+
+3ds:
+	$(MAKE) CROSS="$(DEVKITARM)/bin/arm-none-eabi-" HOST_CC="gcc -m32" TARGET_CFLAGS="-mword-relocations -fomit-frame-pointer -ffunction-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft" TARGET_SYS=Other TARGET_LDFLAGS="-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -specs=3dsx.specs -g -L $(DEVKITPRO)/libctru/lib -lctru -lm"
 
 
 uninstall:
